@@ -1,0 +1,71 @@
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+	xmlns:Soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:mdyn="urn:microsoft-dynamics-schemas/page/items">
+  <xsl:output method="text" encoding="utf-8" />
+  
+  <xsl:param name="country" select="initialValue"/>
+
+  <xsl:param name="delim" select="','" />
+  <xsl:param name="quote" select="'&quot;'" />
+  <xsl:param name="break" select="'&#xA;'" />
+  
+
+<!--
+
+ 			  <Items>
+               <Key>20;GwAAAACJ/zEwMS42NTk=8;105098110;</Key>
+               <No>101.659</No>
+               <Description>Press-fit tool scraper ring</Description>
+               <BaseUnitOfMeasure>EACH</BaseUnitOfMeasure>
+               <InventoryPostingGroup>PTHERM</InventoryPostingGroup>
+               <UnitPrice>24</UnitPrice>
+               <UnitCost>100.8</UnitCost>
+               <LastDirectCost>100.8</LastDirectCost>
+               <GenProdPostingGroup>CE-P-THERM</GenProdPostingGroup>
+               <StoreCode>53600100</StoreCode>
+               <SalesUnitOfMeasure>EACH</SalesUnitOfMeasure>
+               <PurchUnitOfMeasure>EACH</PurchUnitOfMeasure>
+               <ItemCategoryCode>PTHERM</ItemCategoryCode>
+               <ItemStatusCode>OPEN</ItemStatusCode>
+               <DefaultLocationCode>,AZZURRI,</DefaultLocationCode>
+               <ItemUnitsOfMeasure>EACH,1</ItemUnitsOfMeasure>
+               <DateTimeModified>0001-01-01T00:00:00</DateTimeModified>
+            </Items>
+-->            
+
+  <xsl:template match="/">
+    <xsl:apply-templates select="/Soap:Envelope/Soap:Body/mdyn:ReadMultiple_Result/mdyn:ReadMultiple_Result/mdyn:Items" />
+  </xsl:template>
+
+  <xsl:template match="mdyn:Items">
+  	<xsl:choose>
+  		<xsl:when test="$country != 'Canada'">
+		  	<xsl:call-template name="manual"/>
+		    <xsl:if test="following-sibling::*">
+      			<xsl:value-of select="$break" />
+		    </xsl:if>
+		</xsl:when>
+	</xsl:choose>
+  </xsl:template>
+  
+  <xsl:template name="manual">
+    <!-- remove normalize-space() if you want keep white-space at it is --> 
+    <xsl:value-of select="concat($quote, mdyn:Key, $quote, $delim,$quote, mdyn:No, $quote, $delim,$quote, translate(mdyn:Description, ',&quot;Ø',''), $quote, $delim,$quote, mdyn:BaseUnitOfMeasure, $quote, $delim,$quote, mdyn:InventoryPostingGroup, $quote, $delim,$quote, mdyn:UnitPrice, $quote 
+    , $delim,$quote, mdyn:UnitCost, $quote
+    , $delim,$quote, mdyn:LastDirectCost, $quote
+    , $delim,$quote, mdyn:VendorNo, $quote
+    , $delim,$quote, mdyn:LeadTimeCalculation, $quote
+    , $delim,$quote, mdyn:GenProdPostingGroup, $quote
+    , $delim,$quote, mdyn:StoreCode, $quote
+    , $delim,$quote, mdyn:SalesUnitOfMeasure, $quote
+    , $delim,$quote, mdyn:PurchUnitOfMeasure, $quote
+    , $delim,$quote, mdyn:ItemCategoryCode, $quote
+    , $delim,$quote, mdyn:ItemStatusCode, $quote
+    , $delim, $quote, translate(mdyn:DefaultLocationCode, ',&quot;',''), $quote
+	, $delim, $quote, translate(mdyn:ItemUnitsOfMeasure, ',&quot;',''), $quote        
+	, $delim,$quote, mdyn:DateTimeModified, $quote
+	, $delim,$quote, $country, $quote
+    )" />
+  </xsl:template>
+
+  <xsl:template match="text()" />
+</xsl:stylesheet>
