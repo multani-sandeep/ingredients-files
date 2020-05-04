@@ -1,0 +1,116 @@
+rm output/valueentries.csv
+find input -type f -name "*ValueEntries.xml" -print0 | while IFS= read -r -d '' file; do
+	xsltproc xsd/valueentries.xsd "$file" >> output/valueentries.csv
+	echo >> output/valueentries.csv
+done
+
+rm output/itemledgerentry.csv; find input -type f -name "*ItemLedgerEntry*.xml" -print0 | while IFS= read -r -d '' file; do
+	xsltproc xsd/itemledgerentry.xsd "$file" >> output/itemledgerentry.csv
+	echo >> output/itemledgerentry.csv
+	
+done	
+
+rm output/itembinding.csv;find input -type f -name "*Items_Binding*.xml" -print0 | while IFS= read -r -d '' file; do
+	xsltproc --stringparam country `echo $file | sed 's/.*TestSuite_\([A-Za-z]*\)\.xml/\1/g'` xsd/itembinding.xsd "$file" >> output/itembinding.csv
+	echo  >> output/itembinding.csv
+done
+
+rm output/customer.csv; find input -type f -name "*CEDAR_Data*.xml" -print0 | while IFS= read -r -d '' file; do
+	xsltproc xsd/customer.xsd "$file" >> output/customer.csv
+	echo >> output/customer.csv
+done
+
+.separator ,
+
+
+delete from customer; 
+.import customer.csv customer
+
+delete from itemledgerentry; 
+.import itemledgerentry.csv itemledgerentry
+
+delete from items; 
+.import itembinding.csv items
+
+delete from valueentries; 
+.import valueentries.csv valueentries
+
+xsltproc valueentries.xsd input.xml > valueentries.csv
+
+xsltproc itemledgerentry.xsd input.xml > itemledgerentry.csv
+
+xsltproc customer.xsd input.xml > customer.csv; cat customer.csv
+
+xsltproc itembinding.xsd input.xml > itembinding.csv; cat itembinding.csv
+
+
+drop table if exists customer; create table customer (key varchar primary key, no varchar, name varchar, propertyno varchar, propertyname varchar, datetimemodified date);
+          
+          
+        
+              
+drop table if exists items; create table items (key varchar primary key, no varchar, description varchar, baseunitofmeasure varchar, inventorypostinggroup varchar, unitprice varchar, unitcost varchar, lastdirectcost varchar, vendorno varchar, leadtimecalculation varchar, genprodpostinggroup varchar, storecode varchar, salesunitofmeasure varchar, purchunitofmeasure varchar, itemcategorycode varchar, itemstatuscode varchar, defaultlocationcode varchar, itemunitsofmeasure varchar, datetimemodified date, country varchar);
+
+drop table if exists valueentries; create table valueentries (key varchar primary key, entryno varchar, 
+ledgerentryno varchar, 
+postingdate varchar, 
+entrytype varchar, 
+documenttype varchar, 
+documentno varchar, 
+documentdate varchar, 
+costamountexpected varchar, 
+costamountactual varchar, 
+purchaseamountexpected varchar, 
+purchaseamountactual varchar, 
+salesamountexpected varchar, 
+salesamountactual varchar);
+
+
+drop table if exists itemledgerentry; create table itemledgerentry (key varchar primary key, entryno varchar, 
+itemno varchar, 
+postingdate varchar, 
+entrytype varchar, 
+documenttype varchar, 
+documentno varchar, 
+documentdate varchar, 
+locationcode varchar, 
+unitofmeasurecode varchar, 
+qtyperunitofmeasure varchar, 
+quantity varchar, 
+invoicedquantity varchar, 
+open varchar,
+storecode varchar, 
+itemcategorycode varchar, 
+completelyinvoiced varchar
+);
+
+drop view if exists sumledgerentries;
+create view sumledgerentries as select 
+ile.entryno, coalesce(sum(ve.costamountactual), 0) as costamountactual
+from itemledgerentry as ile 
+left join valueentries as ve on ve.ledgerentryno=ile.entryno
+left join customer as cust on propertyno = storecode 
+group by ile.entryno;
+
+----------SQl
+
+Check duplicate entrynos
+	select count(distinct entryno)  as uniqentries, count( entryno) as allentries from itemledgerentry
+
+Find duplicate propertynos in customer
+﻿select propertyno, count(1) from customer where length(propertyno)>0 group by propertyno having count(propertyno) >1 
+
+
+Extract SQL for valueentry
+	select ile.entryno as EntryNo, ile.itemno as ItemNo, ile.postingdate as PostingDate, ile.entrytype as EntryType, ile.unitofmeasurecode as UnitOfMeasureCode, ile.qtyperunitofmeasure as Quantity, ile.open as Open, ile.storecode as StoreCode, cust.no as 'Site Number',  ile.documentno as DocumentNo, 'GBR' as Countrycode, ile.completelyinvoiced as CompletelyInvoiced, totals.costamountactual as 'Cost Amount Actual'  from itemledgerentry as ile  left join valueentries as ve on ve.ledgerentryno=ile.entryno left join customer as cust on propertyno = storecode  left join sumledgerentries as totals on totals.entryno=ile.entryno where 1=1;
+
+**This has header names with spaces that render incorrectly with quotes 
+
+
+Extract SQL for items
+select 
+no as 'Item Code', description as 'Item Description', baseunitofmeasure as BaseUnitOfMeasure, inventorypostinggroup as InventoryPostingGroup , unitcost as UnitCost, itemstatuscode as ItemStatusCode 
+, case country when 'Malaysia' then 'MYR'  when 'Germany' then 'EUR' when 'UK' then 'GBP' END as Currency
+, case country when 'Malaysia' then 'MYS'  when 'Germany' then 'DEU' when 'UK' then 'GBR' END as CountryCode
+from items
+
