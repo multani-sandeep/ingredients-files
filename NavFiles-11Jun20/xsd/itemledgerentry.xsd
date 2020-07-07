@@ -1,0 +1,69 @@
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+	xmlns:Soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:mdyn="urn:microsoft-dynamics-schemas/page/itemledgerentry">
+  <xsl:output method="text" encoding="utf-8" />
+
+  <xsl:param name="delim" select="','" />
+  <xsl:param name="quote" select="'&quot;'" />
+  <xsl:param name="break" select="'&#xA;'" />
+
+
+
+  <xsl:template match="/">
+    <xsl:apply-templates select="/Soap:Envelope/Soap:Body/mdyn:ReadMultiple_Result/mdyn:ReadMultiple_Result/mdyn:ItemLedgerEntry" />
+  </xsl:template>
+
+  <xsl:template match="mdyn:ItemLedgerEntry">
+    <xsl:call-template name="manual" />
+    <xsl:if test="following-sibling::*">
+      <xsl:value-of select="$break" />
+    </xsl:if>
+  </xsl:template>
+  
+  <!--
+  <ItemLedgerEntry>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <Key>12;IAAAAACHHCm311;280806277270;</Key>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <EntryNo>12003612</EntryNo>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <ItemNo>T123.985</ItemNo>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <PostingDate>2019-04-15</PostingDate>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <EntryType>Negative_Adjmt</EntryType>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <DocumentType>_blank_</DocumentType>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <DocumentNo>1223388</DocumentNo>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <DocumentDate>2019-04-15</DocumentDate>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <LocationCode>VANS</LocationCode>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <UnitOfMeasureCode>EA</UnitOfMeasureCode>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <QtyPerUnitOfMeasure>1</QtyPerUnitOfMeasure>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <Quantity>-1</Quantity>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <InvoicedQuantity>-1</InvoicedQuantity>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <Open>false</Open>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <StoreCode>53300100</StoreCode>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <ItemCategoryCode>PTHERM</ItemCategoryCode>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-               <CompletelyInvoiced>true</CompletelyInvoiced>
+08-05-2019 16-53 ItemLedgerEntry_Binding TestSuite.xml-            </ItemLedgerEntry>
+  -->
+
+  <xsl:template name="manual">
+    <!-- remove normalize-space() if you want keep white-space at it is --> 
+    <xsl:value-of select="concat($quote, mdyn:Key, $quote, $delim,
+    $quote, mdyn:EntryNo, $quote, $delim,
+    $quote, mdyn:ItemNo, $quote, $delim,
+$quote, mdyn:PostingDate, $quote, $delim,
+$quote, mdyn:EntryType, $quote, $delim,
+$quote, mdyn:DocumentType, $quote, $delim,
+$quote, mdyn:DocumentNo, $quote, $delim,
+$quote, mdyn:DocumentDate, $quote, $delim,
+$quote, mdyn:LocationCode, $quote, $delim,
+$quote, mdyn:UnitOfMeasureCode, $quote, $delim,
+$quote, mdyn:QtyPerUnitOfMeasure, $quote, $delim,
+$quote, mdyn:Quantity, $quote, $delim,
+$quote, mdyn:InvoicedQuantity, $quote, $delim,
+$quote, mdyn:Open, $quote, $delim,
+$quote, mdyn:StoreCode, $quote, $delim,
+$quote, mdyn:ItemCategoryCode, $quote, $delim,
+$quote, mdyn:CompletelyInvoiced, $quote
+
+)" />
+    
+  </xsl:template>
+
+  <xsl:template match="text()" />
+</xsl:stylesheet>
