@@ -1,0 +1,50 @@
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+	xmlns:Soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:mdyn="urn:microsoft-dynamics-schemas/page/customer">
+  <xsl:output method="text" encoding="utf-8" />
+
+  <xsl:param name="delim" select="','" />
+  <xsl:param name="quote" select="'&quot;'" />
+  <xsl:param name="break" select="'&#xA;'" />
+
+<!--
+
+ 			<Customer>
+               <Key>20;EgAAAACJCDYwMDAwMDAx11;276423894680;</Key>
+               <No>60000001</No>
+               <Name>Servest Catering Ltd@ 3 Falcon Way</Name>
+               <PropertyNo>53300E29</PropertyNo>
+               <PropertyName>Servest Catering Ltd@ 3 Falcon Way</PropertyName>
+               <DateTimeModified>2018-12-20T10:59:15.24Z</DateTimeModified>
+            </Customer>
+-->            
+
+  <xsl:template match="/">
+    <xsl:apply-templates select="/Soap:Envelope/Soap:Body/mdyn:ReadMultiple_Result/mdyn:ReadMultiple_Result/mdyn:Customer" />
+  </xsl:template>
+
+  <xsl:template match="mdyn:Customer">
+  <xsl:choose>
+	  <xsl:when test="mdyn:PropertyNo">
+    		<xsl:call-template name="full_customer"/>
+    	</xsl:when>
+    	<xsl:otherwise>    	
+	    	<xsl:call-template name="partial_customer"/>
+    	</xsl:otherwise>
+    </xsl:choose>
+    <xsl:if test="following-sibling::*">
+      <xsl:value-of select="$break" />
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template name="full_customer">
+    <!-- remove normalize-space() if you want keep white-space at it is --> 
+    <xsl:value-of select="concat($quote, mdyn:Key, $quote, $delim,$quote, mdyn:No, $quote, $delim,$quote, mdyn:Name, $quote, $delim,$quote, normalize-space(mdyn:PropertyNo), $quote, $delim,$quote, mdyn:PropertyName, $quote, $delim,$quote, mdyn:DateTimeModified, $quote)" />
+  </xsl:template>
+  
+  <xsl:template name="partial_customer">
+    <!-- remove normalize-space() if you want keep white-space at it is --> 
+    <xsl:value-of select="concat($quote, mdyn:Key, $quote, $delim,$quote, mdyn:No, $quote, $delim,$quote, mdyn:Name, $quote, $delim,$quote, $quote, $delim,$quote, $quote, $delim,$quote, mdyn:DateTimeModified, $quote)" />
+  </xsl:template>
+
+  <xsl:template match="text()" />
+</xsl:stylesheet>
